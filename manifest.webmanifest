@@ -1,0 +1,16 @@
+{
+  "name": "Υπολογιστής Κόστους Νερού",
+  "short_name": "Κόστος Νερού",
+  "description": "Μηνιαίο κόστος νερού για οικογένειες με βάση την οικιακή κλιμακωτή διατίμηση",
+  "lang": "el",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3f7fa",
+  "theme_color": "#0b5d8a",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

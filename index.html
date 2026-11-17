@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Υπολογιστής Κόστους Νερού</title>
+<meta name="description" content="Υπολογισμός μηνιαίου κόστους νερού για οικογένειες με βάση την οικιακή κλιμακωτή διατίμηση.">
+<meta name="theme-color" content="#0b5d8a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Κόστος Νερού">
+<style>
+  :root{
+    --bg:#f3f7fa; --card:#ffffff; --ink:#12263a; --muted:#5b6f82; --line:#dde6ee;
+    --brand:#0b5d8a; --brand-2:#1a8fc4; --soft:#e7f2f9; --warn:#c2410c;
+    --radius:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0d1720; --card:#15222e; --ink:#e6eef5; --muted:#93a7b9; --line:#24384a;
+           --brand:#4fb3e6; --brand-2:#7cc8ee; --soft:#1b3142; --warn:#fb923c; }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+       background:var(--bg);color:var(--ink);line-height:1.45;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:20px 16px 48px}
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px}
+  .brand{display:flex;gap:12px;align-items:center}
+  .logo{width:44px;height:44px;flex:none}
+  h1{font-size:1.35rem;margin:0;letter-spacing:-.01em}
+  .sub{margin:2px 0 0;color:var(--muted);font-size:.92rem}
+  .lang{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;flex:none;background:var(--card)}
+  .lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.85rem;cursor:pointer}
+  .lang button[aria-pressed="true"]{background:var(--brand);color:#fff}
+  .grid{display:grid;grid-template-columns:1fr;gap:16px}
+  @media (min-width:820px){ .grid{grid-template-columns:5fr 6fr} }
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .card h2{font-size:1rem;margin:0 0 14px;letter-spacing:.01em}
+  .field{margin-bottom:20px}
+  .field:last-child{margin-bottom:0}
+  .field label,.lbl{display:block;font-weight:600;font-size:.92rem;margin-bottom:8px}
+  .hint{color:var(--muted);font-weight:400;font-size:.82rem}
+  .stepper{display:flex;align-items:center;gap:8px}
+  .stepper button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--soft);
+                  color:var(--brand);font-size:1.4rem;line-height:1;cursor:pointer}
+  .stepper button:active{transform:scale(.96)}
+  .stepper input{width:80px;height:44px;text-align:center;font-size:1.25rem;font-weight:700}
+  input[type=number]{border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit;padding:6px 8px}
+  input[type=number]:focus{outline:2px solid var(--brand-2);outline-offset:1px}
+  .row{display:flex;align-items:center;gap:12px}
+  .row input[type=range]{flex:1}
+  .row input[type=number]{width:90px;text-align:right;font-weight:700;font-size:1.05rem;height:40px}
+  input[type=range]{accent-color:var(--brand);height:28px}
+  .presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .chip{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 11px;font:inherit;font-size:.82rem;cursor:pointer}
+  .chip.on{background:var(--soft);border-color:var(--brand-2);color:var(--brand);font-weight:600}
+  .total{background:linear-gradient(135deg,#0b5d8a,#1a8fc4);color:#fff;border:0}
+  .total .k{opacity:.85;font-size:.9rem}
+  .total .big{font-size:2.6rem;font-weight:800;letter-spacing:-.02em;line-height:1.1;margin:4px 0 2px}
+  .total .vol{opacity:.9;font-size:.95rem}
+  .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:16px}
+  .stat{background:rgba(255,255,255,.13);border-radius:10px;padding:10px 12px}
+  .stat .k{font-size:.78rem}
+  .stat .v{font-size:1.15rem;font-weight:700;margin-top:2px}
+  table{width:100%;border-collapse:collapse;font-size:.9rem}
+  th,td{padding:8px 6px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+  th:first-child,td:first-child{text-align:left}
+  th{font-size:.78rem;color:var(--muted);font-weight:600;text-transform:none}
+  tbody tr:last-child td{border-bottom:0}
+  tr.inactive td{color:var(--muted);opacity:.55}
+  tr.cur td{background:var(--soft);font-weight:700}
+  tfoot td{font-weight:800;border-top:2px solid var(--ink);border-bottom:0}
+  .barcell{width:34%}
+  .bar{height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+  .bar>span{display:block;height:100%;border-radius:5px}
+  .swatch{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
+  .stack{display:flex;height:16px;border-radius:8px;overflow:hidden;background:var(--line);margin:4px 0 14px}
+  .stack>span{height:100%}
+  details{margin-top:16px}
+  summary{cursor:pointer;font-weight:700;font-size:1rem;padding:2px 0}
+  .tariff td input{width:84px;text-align:right}
+  .tariff td input.n{width:64px}
+  .btn{border:1px solid var(--line);background:var(--soft);color:var(--brand);border-radius:10px;padding:8px 14px;font:inherit;font-weight:600;cursor:pointer;margin-top:12px}
+  .note{color:var(--muted);font-size:.82rem;margin-top:16px}
+  .full{grid-column:1/-1}
+  .scroll{overflow-x:auto}
+  .install{display:none;margin-left:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 64 64" aria-hidden="true">
+        <rect width="64" height="64" rx="14" fill="#0b5d8a"/>
+        <path d="M32 11C32 11 16 29 16 40a16 16 0 0 0 32 0C48 29 32 11 32 11z" fill="#fff"/>
+        <text x="32" y="47" text-anchor="middle" font-size="17" font-weight="800" fill="#0b5d8a" font-family="system-ui,Arial">€</text>
+      </svg>
+      <div>
+        <h1 data-i="title"></h1>
+        <p class="sub" data-i="subtitle"></p>
+      </div>
+    </div>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="el">ΕΛ</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="card">
+      <h2 data-i="inputs"></h2>
+
+      <div class="field">
+        <span class="lbl" data-i="persons"></span>
+        <div class="stepper">
+          <button type="button" id="pMinus" aria-label="−">−</button>
+          <input type="number" id="persons" min="1" max="20" step="1" inputmode="numeric">
+          <button type="button" id="pPlus" aria-label="+">+</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="lpcd"><span data-i="lpcd"></span> <span class="hint" data-i="lpcdHint"></span></label>
+        <div class="row">
+          <input type="range" id="lpcdRange" min="50" max="400" step="5" aria-label="L/person/day">
+          <input type="number" id="lpcd" min="1" max="2000" step="1" inputmode="numeric">
+        </div>
+        <div class="presets" id="presets"></div>
+      </div>
+
+      <div class="field">
+        <label for="days"><span data-i="days"></span> <span class="hint" data-i="daysHint"></span></label>
+        <div class="row">
+          <input type="range" id="daysRange" min="28" max="31" step="1" aria-label="days">
+          <input type="number" id="days" min="1" max="31" step="1" inputmode="numeric">
+        </div>
+      </div>
+    </section>
+
+    <section class="card total" aria-live="polite">
+      <div class="k" data-i="monthlyBill"></div>
+      <div class="big" id="tTotal">—</div>
+      <div class="vol" id="tVol">—</div>
+      <div class="stats">
+        <div class="stat"><div class="k" data-i="perPerson"></div><div class="v" id="sPer">—</div></div>
+        <div class="stat"><div class="k" data-i="annual"></div><div class="v" id="sYear">—</div></div>
+        <div class="stat"><div class="k" data-i="avgPrice"></div><div class="v" id="sAvg">—</div></div>
+        <div class="stat"><div class="k" data-i="marginal"></div><div class="v" id="sMarg">—</div></div>
+      </div>
+    </section>
+
+    <section class="card full">
+      <h2 data-i="breakdown"></h2>
+      <div class="stack" id="stack" aria-hidden="true"></div>
+      <div class="scroll">
+        <table>
+          <thead><tr>
+            <th data-i="block"></th><th data-i="rate"></th><th data-i="volume"></th><th data-i="cost"></th>
+          </tr></thead>
+          <tbody id="bdBody"></tbody>
+          <tfoot><tr><td data-i="total"></td><td></td><td id="bdVol"></td><td id="bdTot"></td></tr></tfoot>
+        </table>
+      </div>
+    </section>
+
+    <section class="card full">
+      <h2><span data-i="compare"></span> <span class="hint" id="cmpHint"></span></h2>
+      <div class="scroll">
+        <table>
+          <thead><tr>
+            <th data-i="persons"></th><th data-i="m3month"></th><th data-i="eurMonth"></th><th data-i="eurPerson"></th><th class="barcell"></th>
+          </tr></thead>
+          <tbody id="cmpBody"></tbody>
+        </table>
+      </div>
+
+      <details id="tariffBox">
+        <summary data-i="tariff"></summary>
+        <div class="scroll">
+          <table class="tariff">
+            <thead><tr><th data-i="from"></th><th data-i="to"></th><th data-i="rateEur"></th></tr></thead>
+            <tbody id="tfBody"></tbody>
+            <tfoot><tr><td data-i="fixed"></td><td></td><td><input type="number" id="tfFixed" step="0.01" min="0"></td></tr></tfoot>
+          </table>
+        </div>
+        <button type="button" class="btn" id="tfReset" data-i="reset"></button>
+      </details>
+
+      <p class="note" data-i="note"></p>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var DEFAULT_TARIFF = {
+    fixed: 4.00,
+    blocks: [
+      {from:0,  to:10,   rate:1.05},
+      {from:10, to:20,   rate:1.45},
+      {from:20, to:30,   rate:1.80},
+      {from:30, to:40,   rate:2.50},
+      {from:40, to:60,   rate:3.00},
+      {from:60, to:80,   rate:5.00},
+      {from:80, to:null, rate:10.00}
+    ]
+  };
+  var COLORS = ["#7cc8ee","#3aa6dc","#1a7fb8","#0b5d8a","#e3a008","#ea580c","#b91c1c"];
+  var PRESETS = [80,100,120,150,200,250];
+
+  var I18N = {
+    el:{
+      title:"Υπολογιστής Κόστους Νερού",
+      subtitle:"Οικιακή κλιμακωτή διατίμηση — μηνιαίο κόστος ανά νοικοκυριό",
+      inputs:"Στοιχεία νοικοκυριού",
+      persons:"Άτομα στο σπίτι",
+      lpcd:"Κατανάλωση ανά άτομο",
+      lpcdHint:"(λίτρα / άτομο / ημέρα)",
+      days:"Ημέρες μήνα",
+      daysHint:"(για τη μετατροπή σε μηνιαία κατανάλωση)",
+      monthlyBill:"Μηνιαίος λογαριασμός",
+      consumptionOf:"Κατανάλωση {v} κ.μ. / μήνα",
+      perPerson:"Ανά άτομο / μήνα",
+      annual:"Ετήσιο κόστος",
+      avgPrice:"Μέση τιμή (με πάγιο)",
+      marginal:"Οριακή τιμή κλιμακίου",
+      breakdown:"Ανάλυση ανά κλιμάκιο",
+      block:"Κλιμάκιο",
+      rate:"Τιμή",
+      volume:"Όγκος",
+      cost:"Κόστος",
+      total:"Σύνολο",
+      fixed:"Πάγιο ποσό (€ / μήνα)",
+      fixedRow:"Πάγιο ποσό",
+      over:"Πέραν των {a} κ.μ.",
+      range:"{a} – {b} κ.μ.",
+      compare:"Σύγκριση ανά μέγεθος νοικοκυριού",
+      cmpHint:"(με {l} λίτρα / άτομο / ημέρα)",
+      m3month:"κ.μ. / μήνα",
+      eurMonth:"€ / μήνα",
+      eurPerson:"€ / άτομο",
+      tariff:"Διατίμηση (επεξεργάσιμη)",
+      from:"Από (κ.μ.)",
+      to:"Έως (κ.μ.)",
+      rateEur:"€ / κ.μ.",
+      reset:"Επαναφορά προεπιλεγμένης διατίμησης",
+      perM3:"/ κ.μ.",
+      note:"Τα κλιμάκια εφαρμόζονται προοδευτικά στη μηνιαία κατανάλωση (κάθε κυβικό χρεώνεται με την τιμή του κλιμακίου στο οποίο ανήκει). Μηνιαία κατανάλωση = άτομα × λίτρα/άτομο/ημέρα × ημέρες ÷ 1000. Δεν περιλαμβάνονται ΦΠΑ, τέλη αποχέτευσης ή άλλες χρεώσεις."
+    },
+    en:{
+      title:"Water Cost Calculator",
+      subtitle:"Domestic increasing-block tariff — monthly cost per household",
+      inputs:"Household",
+      persons:"People in the house",
+      lpcd:"Consumption per person",
+      lpcdHint:"(litres / person / day)",
+      days:"Days per month",
+      daysHint:"(to convert to monthly consumption)",
+      monthlyBill:"Monthly bill",
+      consumptionOf:"Consumption {v} m³ / month",
+      perPerson:"Per person / month",
+      annual:"Annual cost",
+      avgPrice:"Average price (incl. fixed)",
+      marginal:"Marginal block price",
+      breakdown:"Breakdown by block",
+      block:"Block",
+      rate:"Price",
+      volume:"Volume",
+      cost:"Cost",
+      total:"Total",
+      fixed:"Fixed charge (€ / month)",
+      fixedRow:"Fixed charge",
+      over:"Above {a} m³",
+      range:"{a} – {b} m³",
+      compare:"Comparison by household size",
+      cmpHint:"(at {l} litres / person / day)",
+      m3month:"m³ / month",
+      eurMonth:"€ / month",
+      eurPerson:"€ / person",
+      tariff:"Tariff (editable)",
+      from:"From (m³)",
+      to:"To (m³)",
+      rateEur:"€ / m³",
+      reset:"Reset to default tariff",
+      perM3:"/ m³",
+      note:"Blocks are applied progressively to monthly consumption (each cubic metre is charged at the price of the block it falls in). Monthly consumption = people × litres/person/day × days ÷ 1000. VAT, sewerage fees and other charges are not included."
+    }
+  };
+
+  // ---------- state ----------
+  function load(k, d){ try{ var v = localStorage.getItem("wcc."+k); return v===null? d : JSON.parse(v); }catch(e){ return d; } }
+  function save(k, v){ try{ localStorage.setItem("wcc."+k, JSON.stringify(v)); }catch(e){} }
+
+  var state = {
+    lang: load("lang","el"),
+    persons: load("persons",4),
+    lpcd: load("lpcd",150),
+    days: load("days",30),
+    tariff: load("tariff", null) || clone(DEFAULT_TARIFF)
+  };
+  function clone(o){ return JSON.parse(JSON.stringify(o)); }
+
+  // ---------- calc ----------
+  function calc(volume, tariff){
+    var rows = [], energy = 0, marginal = tariff.blocks[0].rate;
+    tariff.blocks.forEach(function(b){
+      var width = (b.to===null || b.to===undefined || b.to==="") ? Infinity : (b.to - b.from);
+      var q = Math.max(0, Math.min(volume - b.from, width));
+      var c = q * b.rate;
+      if (volume > b.from) marginal = b.rate;
+      rows.push({b:b, q:q, c:c});
+      energy += c;
+    });
+    var total = energy + tariff.fixed;
+    return {rows:rows, variable:energy, total:total, marginal:marginal};
+  }
+  function monthlyVolume(persons, lpcd, days){ return persons * lpcd * days / 1000; }
+
+  // ---------- formatting ----------
+  function T(k, vars){
+    var s = (I18N[state.lang] && I18N[state.lang][k]) || I18N.el[k] || k;
+    if (vars) Object.keys(vars).forEach(function(n){ s = s.replace("{"+n+"}", vars[n]); });
+    return s;
+  }
+  function loc(){ return state.lang==="el" ? "el-GR" : "en-GB"; }
+  function eur(v){ return new Intl.NumberFormat(loc(),{style:"currency",currency:"EUR"}).format(v); }
+  function num(v, d){ return new Intl.NumberFormat(loc(),{minimumFractionDigits:d,maximumFractionDigits:d}).format(v); }
+  function blockLabel(b){
+    if (b.to===null || b.to===undefined || b.to==="") return T("over",{a:num(b.from,0)});
+    return T("range",{a:num(b.from===0?1:b.from+1,0), b:num(b.to,0)});
+  }
+
+  // ---------- DOM ----------
+  var $ = function(id){ return document.getElementById(id); };
+
+  function applyLang(){
+    document.documentElement.lang = state.lang;
+    document.title = T("title");
+    document.querySelectorAll("[data-i]").forEach(function(el){ el.textContent = T(el.getAttribute("data-i")); });
+    document.querySelectorAll(".lang button").forEach(function(b){ b.setAttribute("aria-pressed", String(b.dataset.lang===state.lang)); });
+    buildTariffEditor();
+    render();
+  }
+
+  function buildPresets(){
+    var box = $("presets"); box.innerHTML = "";
+    PRESETS.forEach(function(p){
+      var b = document.createElement("button");
+      b.type="button"; b.className="chip"; b.textContent = p+" L"; b.dataset.v = p;
+      b.addEventListener("click", function(){ setLpcd(p); });
+      box.appendChild(b);
+    });
+  }
+
+  function buildTariffEditor(){
+    var body = $("tfBody"); body.innerHTML = "";
+    state.tariff.blocks.forEach(function(b, i){
+      var tr = document.createElement("tr");
+      var last = (i === state.tariff.blocks.length-1);
+      tr.innerHTML =
+        '<td><span class="swatch" style="background:'+COLORS[i%COLORS.length]+'"></span>'+num(b.from,0)+'</td>'+
+        '<td>'+(last ? '∞' : '<input class="n" type="number" min="0" step="1" data-i2="to" data-k="'+i+'" value="'+b.to+'">')+'</td>'+
+        '<td><input type="number" min="0" step="0.01" data-i2="rate" data-k="'+i+'" value="'+b.rate.toFixed(2)+'"></td>';
+      body.appendChild(tr);
+    });
+    $("tfFixed").value = state.tariff.fixed.toFixed(2);
+    body.querySelectorAll("input").forEach(function(inp){
+      inp.addEventListener("input", function(){
+        var k = +inp.dataset.k, f = inp.dataset.i2, v = parseFloat(inp.value);
+        if (!isFinite(v) || v < 0) return;
+        state.tariff.blocks[k][f] = v;
+        if (f==="to" && state.tariff.blocks[k+1]) {
+          state.tariff.blocks[k+1].from = v;
+          var cell = body.rows[k+1].cells[0];
+          cell.innerHTML = '<span class="swatch" style="background:'+COLORS[(k+1)%COLORS.length]+'"></span>'+num(v,0);
+        }
+        save("tariff", state.tariff); render();
+      });
+    });
+  }
+
+  function setPersons(v){ v = Math.round(+v); if(!isFinite(v)) return; state.persons = Math.min(20, Math.max(1, v)); save("persons",state.persons); render(); }
+  function setLpcd(v){ v = Math.round(+v); if(!isFinite(v) || v<=0) return; state.lpcd = Math.min(2000, v); save("lpcd",state.lpcd); render(); }
+  function setDays(v){ v = Math.round(+v); if(!isFinite(v)) return; state.days = Math.min(31, Math.max(1, v)); save("days",state.days); render(); }
+
+  function render(){
+    // sync inputs (don't clobber a field the user is typing in)
+    var act = document.activeElement;
+    if (act !== $("persons")) $("persons").value = state.persons;
+    if (act !== $("lpcd")) $("lpcd").value = state.lpcd;
+    $("lpcdRange").value = Math.min(400, Math.max(50, state.lpcd));
+    if (act !== $("days")) $("days").value = state.days;
+    $("daysRange").value = Math.min(31, Math.max(28, state.days));
+    document.querySelectorAll("#presets .chip").forEach(function(c){ c.classList.toggle("on", +c.dataset.v === state.lpcd); });
+
+    var vol = monthlyVolume(state.persons, state.lpcd, state.days);
+    var r = calc(vol, state.tariff);
+
+    $("tTotal").textContent = eur(r.total);
+    $("tVol").textContent = T("consumptionOf",{v:num(vol,2)});
+    $("sPer").textContent = eur(r.total / state.persons);
+    $("sYear").textContent = eur(r.total * 12);
+    $("sAvg").textContent = vol > 0 ? eur(r.total / vol) + " " + T("perM3") : "—";
+    $("sMarg").textContent = eur(r.marginal) + " " + T("perM3");
+
+    // stacked bar
+    var stack = $("stack"); stack.innerHTML = "";
+    var parts = [{c:state.tariff.fixed, col:"#94a3b8"}].concat(r.rows.map(function(x,i){ return {c:x.c, col:COLORS[i%COLORS.length]}; }));
+    parts.forEach(function(p){ if (p.c > 0 && r.total > 0){ var s = document.createElement("span"); s.style.width = (100*p.c/r.total)+"%"; s.style.background = p.col; stack.appendChild(s); } });
+
+    // breakdown table
+    var html = '<tr><td><span class="swatch" style="background:#94a3b8"></span>'+T("fixedRow")+'</td><td>—</td><td>—</td><td>'+eur(state.tariff.fixed)+'</td></tr>';
+    r.rows.forEach(function(x,i){
+      html += '<tr class="'+(x.q>0?'':'inactive')+'"><td><span class="swatch" style="background:'+COLORS[i%COLORS.length]+'"></span>'+blockLabel(x.b)+'</td>'+
+              '<td>'+eur(x.b.rate)+'</td><td>'+num(x.q,2)+'</td><td>'+eur(x.c)+'</td></tr>';
+    });
+    $("bdBody").innerHTML = html;
+    $("bdVol").textContent = num(vol,2);
+    $("bdTot").textContent = eur(r.total);
+
+    // comparison by household size
+    $("cmpHint").textContent = T("cmpHint",{l:state.lpcd});
+    var maxN = Math.max(8, state.persons), rowsC = [], maxPer = 0;
+    for (var n=1; n<=maxN; n++){
+      var v = monthlyVolume(n, state.lpcd, state.days), rc = calc(v, state.tariff);
+      rowsC.push({n:n, v:v, t:rc.total, p:rc.total/n});
+      maxPer = Math.max(maxPer, rc.total/n);
+    }
+    var minPer = Math.min.apply(null, rowsC.map(function(x){return x.p;}));
+    $("cmpBody").innerHTML = rowsC.map(function(x){
+      var w = maxPer>0 ? 100*x.p/maxPer : 0;
+      var col = x.p <= minPer*1.001 ? "#1a8fc4" : (x.p > minPer*1.5 ? "#ea580c" : "#3aa6dc");
+      return '<tr class="'+(x.n===state.persons?'cur':'')+'"><td>'+x.n+'</td><td>'+num(x.v,1)+'</td><td>'+eur(x.t)+'</td><td>'+eur(x.p)+'</td>'+
+             '<td class="barcell"><div class="bar"><span style="width:'+w+'%;background:'+col+'"></span></div></td></tr>';
+    }).join("");
+  }
+
+  // ---------- events ----------
+  $("pMinus").addEventListener("click", function(){ setPersons(state.persons-1); });
+  $("pPlus").addEventListener("click", function(){ setPersons(state.persons+1); });
+  $("persons").addEventListener("input", function(e){ if(e.target.value!=="") setPersons(e.target.value); });
+  $("persons").addEventListener("blur", render);
+  $("lpcdRange").addEventListener("input", function(e){ setLpcd(e.target.value); });
+  $("lpcd").addEventListener("input", function(e){ if(e.target.value!=="") setLpcd(e.target.value); });
+  $("lpcd").addEventListener("blur", render);
+  $("daysRange").addEventListener("input", function(e){ setDays(e.target.value); });
+  $("days").addEventListener("input", function(e){ if(e.target.value!=="") setDays(e.target.value); });
+  $("days").addEventListener("blur", render);
+  $("tfFixed").addEventListener("input", function(e){ var v=parseFloat(e.target.value); if(isFinite(v)&&v>=0){ state.tariff.fixed=v; save("tariff",state.tariff); render(); } });
+  $("tfReset").addEventListener("click", function(){ state.tariff = clone(DEFAULT_TARIFF); save("tariff",state.tariff); buildTariffEditor(); render(); });
+  document.querySelectorAll(".lang button").forEach(function(b){
+    b.addEventListener("click", function(){ state.lang = b.dataset.lang; save("lang",state.lang); applyLang(); });
+  });
+
+  buildPresets();
+  applyLang();
+
+  // ---------- PWA: service worker (works when hosted over HTTPS; ignored in sandboxed previews) ----------
+  try{
+    if ("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
+      window.addEventListener("load", function(){
+        navigator.serviceWorker.register("sw.js").catch(function(){});
+      });
+    }
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
