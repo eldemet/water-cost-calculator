@@ -135,7 +135,7 @@
         <label for="days"><span data-i="days"></span> <span class="hint" data-i="daysHint"></span></label>
         <div class="row">
           <input type="range" id="daysRange" min="28" max="31" step="1" aria-label="days">
-          <input type="number" id="days" min="1" max="31" step="1" inputmode="numeric">
+          <input type="number" id="days" min="28" max="31" step="1" inputmode="numeric">
         </div>
       </div>
     </section>
@@ -304,6 +304,7 @@
     tariff: load("tariff", null) || clone(DEFAULT_TARIFF)
   };
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
+  state.days = Math.min(31, Math.max(28, Math.round(+state.days) || 30));
 
   // ---------- calc ----------
   function calc(volume, tariff){
@@ -386,7 +387,7 @@
 
   function setPersons(v){ v = Math.round(+v); if(!isFinite(v)) return; state.persons = Math.min(20, Math.max(1, v)); save("persons",state.persons); render(); }
   function setLpcd(v){ v = Math.round(+v); if(!isFinite(v) || v<=0) return; state.lpcd = Math.min(2000, v); save("lpcd",state.lpcd); render(); }
-  function setDays(v){ v = Math.round(+v); if(!isFinite(v)) return; state.days = Math.min(31, Math.max(1, v)); save("days",state.days); render(); }
+  function setDays(v){ v = Math.round(+v); if(!isFinite(v)) return; state.days = Math.min(31, Math.max(28, v)); save("days",state.days); render(); }
 
   function render(){
     // sync inputs (don't clobber a field the user is typing in)
